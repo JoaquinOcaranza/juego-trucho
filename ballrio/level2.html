@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <title>Canvas marca acme</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            position: absolute;
+            display: block;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        #fondouno { position: absolute; top: 0px; left: 700px; }
+     
+    </style>
+</head>
+
+<body><div id="fondouno" style="left: 0px ;"><img src="R.png" alt="fondo1" ></div>
+    <canvas id="myCanvas" width="620" height="480">     
+    </canvas>
+        
+    <script>
+        //aca va el codigo
+       
+        var canvas = document.getElementById("myCanvas");
+        //Estavlecer el canvas(vista) del juego
+        var ctx = canvas.getContext("2d");
+        var level = 2;
+        var proplevel = level + 1;
+        var brickForCanvas = 12;
+        window.onload = function()  {
+            fondo1=document.getElementById("2");
+            pararmover=setInterval(mover,50); //iniciar primer temporizador: movimiento
+        }
+
+        let actualURL = window.location.href;
+        let pos = actualURL.indexOf("level");
+        let urlbase = actualURL.substring(0, pos);
+        console.log("actualURL " + actualURL);
+        console.log("pos " + pos);
+        let newURL = actualURL.substring(0, pos) + "level" + (proplevel) + ".html";
+        console.log("new URL " + newURL);
+        var paddleHeight = 10;
+        var paddleWidth = 75;
+        var paddleX = (canvas.width - paddleWidth) / 2; //posicion x de paleta
+        var paddley = (canvas.height - paddleHeight) - 20; //posicion Y de paleta
+        var rightPressed = false; //establece el presionar de la derecha
+        var leftPressed = false; //establece el presionar de la derecha
+        var brickRowCount = 1; //contador de filas 
+        var brickColumnCount = 90; //contador de columnas
+        var brickWidth = 75;
+        var brickHeight = 20;
+        var brickPadding =2;
+        var brickOffsetTop = 430; //espacio vertical entre ladrillos
+        var brickOffsetLeft = 3; //espacio horizontal entre ladrillos
+        var ballcount = 1
+
+        var brickball = brickColumnCount * brickRowCount;
+
+        var score = 0;
+        var lives = 3;
+
+        var levelid = 1
+        var pause = 0
+
+
+       
+
+        //variable ladrillos
+        var colorbrick = { 0: "red", 1: "brown", 3: "yellow", 4: "#4533FF", 5: "gray" }
+        
+        var bricks = [];
+        
+        for (c = 0; c < brickColumnCount; c++) {
+            bricks[c] = [];
+            //for (r = 0; r < brickRowCount; r++) {
+            bricks[c][10] = { x: 0, y: 0, status: 1, originalcolor: "#A29663", touchcolor: colorbrick[getRandomInt(0, 5)], extraBall: 0 };
+            newRandom = getRandomInt(0, 10); //Obtien un número aleatorio
+
+            //}
+        }
+        
+canvas.totalwidth = (brickWidth+brickPadding) * brickForCanvas
+
+        /** Retorna un entero aleatorio entre min (incluido) y max (excluido)
+        *   ¡Usando Math.round() te dará una distribución no-uniforme!
+        */
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min)) + min;
+        }
+
+        //key down
+        document.addEventListener("keydown", keyDownHandler, false);
+        document.addEventListener("keyup", keyUpHandler, false);
+        function keyDownHandler(e) {
+            if (e.keyCode == 39) {
+                rightPressed = true;
+            }
+            else if (e.keyCode == 37) {
+                leftPressed = true;
+            }
+        }
+
+        function keyUpHandler(e) {
+            if (e.keyCode == 39) {
+                rightPressed = false;
+            }
+            else if (e.keyCode == 37) {
+                leftPressed = false;
+            }
+
+
+        }
+
+        //divuja las vidas
+
+        function drawlives() {
+            ctx.font = "16px Segoe UI";
+            ctx.fillStyle = "#000000";
+            ctx.fillText("Lifes: " + lives, 8, 16);
+        }
+        //divuja la bola
+        //bolla variable
+        var ball = { xb: canvas.width / 2, yb: 400, dxba: 2, dyba: -2, radius: 10, lessLife: 1, color: 'blue' };
+        var balls = [ball];
+        console.log("Valor de balls[0] " + balls[0].xb);
+
+
+
+        function ballCollisionDetection() {
+            balls.forEach(function (currentBall, index, array) {
+                collisionDetection2(currentBall);
+            })
+        }
+
+
+        var colorpadlle = "#0095DD";
+        var gravity = 0
+        function drawBall2() {
+            balls.forEach(function (currentBall, index, array) {
+                ctx.beginPath();
+                ctx.arc(currentBall.xb, currentBall.yb, currentBall.radius, 0, Math.PI * 2);
+                ctx.fillStyle = currentBall.color;
+                ctx.fill();
+                ctx.closePath();
+        
+            })
+
+        }
+
+        function drawball() {
+            for (var i = 0; i < 1; i++) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // código para dibujar
+                ctx.beginPath();
+                ctx.arc(balls[i].xb, balls[i].yb, balls[i].radius, 0, Math.PI * 2, false);
+                ctx.fillStyle = ball.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+
+        var innitialXBrick = 0;
+        //divuja ladrilos
+        function drawBricks(currentBall) {
+            newsRandom = getRandomInt(0, 5)
+            for (c = 0; c < brickColumnCount; c++) {
+                for (r = 0; r < brickRowCount; r++) {
+
+                    var brickcol = 5;
+                    var brickX = innitialXBrick + (c * (brickWidth + brickPadding)) + brickOffsetLeft;
+                    var brickY = canvas.height - brickHeight;
+                    bricks[c][10].x = brickX;
+                    bricks[c][10].y = brickY;
+
+                    ctx.beginPath();
+                    ctx.rect(brickX, brickY, brickWidth, brickHeight);
+
+
+
+                    ctx.fillStyle = bricks[c][10].touchcolor;
+                    ctx.fill();
+                    ctx.closePath();
+
+
+
+                }
+            }
+            if((brickX+brickWidth+brickPadding) <= canvas.totalwidth){
+        innitialXBrick = 0; //repite el ciclo 
+    } else {
+        innitialXBrick -= 6;
+    }
+        }
+
+        //nubes bien nubasas
+        var cloud = [];
+        for (cl = 0; cl < 5; cl++) {
+            cloud = {x: 500, y: 45, dx: 1} 
+        }
+
+        var innitialXcloud = 520;
+       
+        function drawcloud() {
+            for (cl = 0; cl < 5; cl++) {
+             
+                var cloudx=innitialXcloud + (cl * (40 + 250)) + 99;
+            
+            ctx.beginPath();
+            ctx.rect(cloudx, cloud.y, 40, 10);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fill();
+            ctx.rect(cloudx+20, cloud.y-24, 40, 30);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fill()
+         
+            ctx.closePath();
+            
+            if (cloudx <= -canvas.width) {
+                innitialXcloud = 500;
+            } else {
+                innitialXcloud += -1;
+                
+            }
+        }
+        }
+        //COLISION BOLA
+
+        function collisionDetection2(currentBall) {
+            for (c = 0; c < brickColumnCount; c++) {
+                for (r = 0; r < brickRowCount; r++) {
+                    var b = bricks[c][r];
+
+
+
+                }
+            }
+        }
+
+
+        function collisionDetection() {
+            for (c = 0; c < brickColumnCount; c++) {
+                for (r = 0; r < brickRowCount; r++) {
+                    var b = bricks[c][r];
+                    if (b.status !== 0) {
+                        if (ball.xb - ball.radius > b.x && ball.xb - ball.radius < b.x + brickWidth && ball.yb - ball.radius > b.y && ball.yb - ball.radius < b.y + brickHeight) {
+                            ball.dyba = -ball.dyba;
+                            b.status--;
+                            ball.color = "#77ED55";
+                            score++
+
+                            if (score == brickRowCount * brickColumnCount) {
+                                alert("Ganaste, esta vez");
+                                document.location.reload();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //divuja el puntaje
+        function drawscore() {
+            ctx.font = "16px Segoe UI";
+            ctx.fillStyle = "#000000";
+            ctx.fillText("Score " + score, 8 * 8 * 6, 16);
+        }
+        //move ball
+        function moveBall(brickY) {
+            balls.forEach(function (currentBall, index, array) {
+                 if (ball.yb = canvas.height - brickHeight - ball.radius ){
+                     ball.dyba = 0
+                 } else{ ball.dyba = 1}
+                if (rightPressed && currentBall.xb < canvas.width - currentBall.radius) {
+                    /*CAMBIA DE COLOR XD*/
+                    currentBall.xb += 4
+                    colorpadlle = '#E365DD'
+                } else
+                    if (leftPressed && currentBall.xb > 0) {
+                        currentBall.xb -= 4;
+                        colorpadlle = '#FEDD50'
+                    } else
+                        if (rightPressed && leftPressed || leftPressed && rightPressed) {
+                            colorpadlle = '#0095DD'
+                        } else {
+                            colorpadlle = '#0095DD'
+                        }
+
+                if (rightPressed && currentBall.xb < canvas.width - 200) {
+                   
+                    ball.dxba--
+                }
+                //Las bolas chocan entre si
+
+
+                /**
+                 * parA que choque primero eje x despues eje y
+                 */
+                //EJE X
+                if (currentBall.xb + currentBall.dxba > canvas.width - currentBall.radius || currentBall.xb + currentBall.dxba < currentBall.radius) {
+                    currentBall.dxba = -currentBall.dxba;
+
+                }
+                //EJE Y
+                if (currentBall.yb + currentBall.dyba < currentBall.radius) {
+                    currentBall.dyba = -ball.dyba;
+
+                }
+
+                //choca con paleta
+                if (currentBall.xb > paddleX && currentBall.xb < paddleX + paddleWidth && currentBall.yb > paddley && currentBall.yb < paddley + paddleHeight) {
+
+                    currentBall.dyba = -currentBall.dyba;
+
+                }
+                //chequea vidas
+                else if (currentBall.yb + currentBall.dyba > canvas.height - currentBall.radius) {
+
+                    if (currentBall.yb + currentBall.dyba > canvas.height - (currentBall.radius - 5)) {
+                        lives = lives - currentBall.lessLife;
+                        if (currentBall.lessLife == 0) {
+                            balls.splice(index, 1);//Elimina una pelotita de balls[]
+                        }
+                        if (lives >= 0) {
+
+                            currentBall.dyba = -currentBall.dyba;
+                            currentBall.xb = canvas.width / 2;
+                            currentBall.yb = canvas.height - 30
+                        }
+                        else {
+                            document.location.reload();
+                            alert("Has muerto");
+                        }
+                    }
+                }
+            })
+        }
+         desplazar= 0
+        function mover() { //temporizador 1: movimiento
+         desplazar-=3; //desplazar fondo1 -10px
+         
+         posicion1=desplazar+"px"; //preparar para código CSS fondo1
+    
+         fondouno.style.left=posicion1; //cambiar posición fondo1 mediante CSS
+        
+         }
+         
+         function repetir() { //temporizador 2: repetir ciclo
+         fondouno.style.left=canvas.width ; //posición inicial de fondo1
+   
+         desplazar=0; //posicion inicial referencia de movimiento.
+         }	
+         setInterval(repetir,9550); //iniciar segundo temporizador: repetición del ciclo. 
+               
+        //Lama a todo
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBall2();
+            //drawPaddle()
+            drawBricks()
+            drawcloud()
+            //drawlives()
+            //drawscore()
+            //ballCollisionDetection();
+            moveBall()
+
+       	
+            //Las bolas chocan entre si
+
+
+            /**
+             * parA que choque primero eje x despues eje y
+            
+            if (ball.xb + ball.dxba > canvas.width - ball.radius || ball.xb + ball.dxba < ball.radius) {
+                ball.dxba = -ball.dxba;
+                ball.color = "#44FFFF"
+            }
+            if (ball.yb + ball.dyba < ball.radius) {
+                ball.dyba = -ball.dyba;
+                ball.color = "#77ED55"
+            }
+            //choca con paleta
+            if (ball.xb > paddleX && ball.xb < paddleX + paddleWidth && ball.yb > paddley && ball.yb < paddley + paddleHeight) {
+
+                ball.dyba = -ball.dyba;
+                ball.color = "#3FD4DD"
+            }
+            else if (ball.yb + ball.dyba > canvas.height - ball.radius) {
+
+                if (ball.yb + ball.dyba > canvas.height - (ball.radius - 5)) {
+                    lives--;
+                    if (lives >= 0) {
+
+                        ball.dyba = -ball.dyba;
+                        ball.xb = canvas.width / 2;
+                        ball.yb = canvas.height - 30
+                    }
+                    else {
+                        document.location.reload();
+                        alert("Has muerto");
+                    }
+                }
+            }*/
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+   
+
+</body>
+
+</html>
